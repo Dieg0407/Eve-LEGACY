@@ -1,11 +1,11 @@
 package beans;
 
-import dao.anotaciones.CampoTabla;
-import dao.anotaciones.LlaveForanea;
-import dao.anotaciones.LlavePrimaria;
+import dao.anotaciones.*;
 
 import java.sql.Types;
 
+@NombreTabla(nombre = "public.eps")
+@LlavePrimariaCompuesta
 public class Eps {
 
     @LlavePrimaria
@@ -90,5 +90,18 @@ public class Eps {
 
     public void setCodigoRegion(int codigoRegion) {
         this.codigoRegion = codigoRegion;
+    }
+
+    @Override
+    public String toString() {
+        return "Eps{" +
+                "codigo=" + codigo +
+                ", denominacion='" + denominacion + '\'' +
+                ", fechaActualizacion='" + fechaActualizacion + '\'' +
+                ", horaAcualizacion='" + horaAcualizacion + '\'' +
+                ", usuarioActualizador='" + usuarioActualizador + '\'' +
+                ", codigoGrupo=" + codigoGrupo +
+                ", codigoRegion=" + codigoRegion +
+                '}';
     }
 }
