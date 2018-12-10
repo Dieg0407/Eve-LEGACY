@@ -1,19 +1,22 @@
 package beans;
 
-import com.azoth.eve.anotaciones.*;
+import com.azoth.eve.anotaciones.CampoTabla;
+import com.azoth.eve.anotaciones.LlavePrimaria;
+import com.azoth.eve.anotaciones.LlavePrimariaCompuesta;
+import com.azoth.eve.anotaciones.NombreTabla;
 
 import java.sql.Types;
 
-@NombreTabla(nombre = "public.eps")
+@NombreTabla(nombre = "public.localidad")
 @LlavePrimariaCompuesta
-public class Eps {
+public class Localidad {
 
     @LlavePrimaria
-    @CampoTabla(campo = "codeps",tipoDato = Types.INTEGER)
-    private int codigo;
+    @CampoTabla(campo = "codlocacion",tipoDato = Types.INTEGER)
+    private int codigoLocalidad;
 
-    @CampoTabla(campo = "deneps",tipoDato = Types.VARCHAR)
-    private String denominacion;
+    @CampoTabla(campo = "denlocacion",tipoDato = Types.VARCHAR)
+    private String descripcionLocalidad;
 
     @CampoTabla(campo = "fecultact",tipoDato = Types.VARCHAR)
     private String fechaActualizacion;
@@ -24,32 +27,36 @@ public class Eps {
     @CampoTabla(campo = "usrultact",tipoDato = Types.VARCHAR)
     private String usuarioActualizador;
 
-    @LlaveForanea
-    @CampoTabla(campo = "codgrupo",tipoDato = Types.INTEGER)
-    private int codigoGrupo;
+    @LlavePrimaria
+    @CampoTabla(campo = "codeps",tipoDato = Types.INTEGER)
+    private int codigoEps;
 
-    @LlaveForanea
-    @CampoTabla(campo = "codregion",tipoDato = Types.INTEGER)
-    private int codigoRegion;
-
-    public Eps(){
+    public Localidad(){
 
     }
 
-    public int getCodigo() {
-        return codigo;
+    public int getCodigoLocalidad() {
+        return codigoLocalidad;
     }
 
-    public void setCodigo(int codigo) {
-        this.codigo = codigo;
+    public void setCodigoLocalidad(int codigoLocalidad) {
+        this.codigoLocalidad = codigoLocalidad;
     }
 
-    public String getDenominacion() {
-        return denominacion;
+    public int getCodigoEps() {
+        return codigoEps;
     }
 
-    public void setDenominacion(String denominacion) {
-        this.denominacion = denominacion;
+    public void setCodigoEps(int codigoEps) {
+        this.codigoEps = codigoEps;
+    }
+
+    public String getDescripcionLocalidad() {
+        return descripcionLocalidad;
+    }
+
+    public void setDescripcionLocalidad(String descripcionLocalidad) {
+        this.descripcionLocalidad = descripcionLocalidad;
     }
 
     public String getFechaActualizacion() {
@@ -76,32 +83,15 @@ public class Eps {
         this.usuarioActualizador = usuarioActualizador;
     }
 
-    public int getCodigoGrupo() {
-        return codigoGrupo;
-    }
-
-    public void setCodigoGrupo(int codigoGrupo) {
-        this.codigoGrupo = codigoGrupo;
-    }
-
-    public int getCodigoRegion() {
-        return codigoRegion;
-    }
-
-    public void setCodigoRegion(int codigoRegion) {
-        this.codigoRegion = codigoRegion;
-    }
-
     @Override
     public String toString() {
-        return "Eps{" +
-                "codigo=" + codigo +
-                ", denominacion='" + denominacion + '\'' +
+        return "Localidad{" +
+                "codigoLocalidad=" + codigoLocalidad +
+                ", codigoEps=" + codigoEps +
+                ", descripcionLocalidad=" + descripcionLocalidad +
                 ", fechaActualizacion='" + fechaActualizacion + '\'' +
                 ", horaAcualizacion='" + horaAcualizacion + '\'' +
                 ", usuarioActualizador='" + usuarioActualizador + '\'' +
-                ", codigoGrupo=" + codigoGrupo +
-                ", codigoRegion=" + codigoRegion +
                 '}';
     }
 }

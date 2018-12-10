@@ -1,4 +1,4 @@
-package dao.conexion;
+package com.azoth.eve.conexion;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

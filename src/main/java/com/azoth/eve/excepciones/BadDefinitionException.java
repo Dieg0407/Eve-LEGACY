@@ -1,4 +1,4 @@
-package dao.excepciones;
+package com.azoth.eve.excepciones;
 
 public class BadDefinitionException extends Exception {
 

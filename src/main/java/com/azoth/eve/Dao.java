@@ -1,8 +1,10 @@
-package dao;
+package com.azoth.eve;
 
-import dao.anotaciones.*;
-import dao.excepciones.BadDefinitionException;
-import dao.excepciones.WrongOperationException;
+import com.azoth.eve.anotaciones.*;
+import com.azoth.eve.excepciones.BadDefinitionException;
+import com.azoth.eve.condicionales.Condicional;
+import com.azoth.eve.condicionales.Operacion;
+import com.azoth.eve.excepciones.WrongOperationException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -68,10 +70,16 @@ public class Dao {
 
         this.construirSelectPrimario(campos,llavesPrimarias,campoSeleccionados);
 
-        String sql = String.format("SELECT %s FROM %s WHERE %s = ? ",
+        List<Parametro> parametros = new ArrayList<>();
+        int c = 0;
+        for(CampoTabla llave : llavesPrimarias){
+            parametros.add(new Parametro(llave, Condicional.AND, Operacion.IGUAL,datos.get(c++)));
+        }
+
+        String sql = String.format("SELECT %s FROM %s %s",
                 campoSeleccionados.toString(),
                 this.nombreTabla.nombre(),
-                llavesPrimarias.get(0).campo());
+                this.clausulaWhere(parametros));
 
         Object bean = this.obtenerNuevaInstancia();
 
@@ -91,13 +99,59 @@ public class Dao {
         }
         return bean;
     }
-
     private void construirSelectPrimario(List<Field> campos,List<CampoTabla> llavePrimaria,StringBuilder campoSeleccionados){
 
         for(Field campo : claseBean.getDeclaredFields()){
             if(campo.getAnnotation(LlavePrimaria.class) != null)
                 llavePrimaria.add(campo.getAnnotation(CampoTabla.class));
 
+            CampoTabla campoTabla = campo.getAnnotation(CampoTabla.class);
+            if(campo.getAnnotation(CampoTabla.class) != null){
+                campoSeleccionados.append(campoTabla.campo());
+                campoSeleccionados.append(",");
+                campos.add(campo);
+            }
+        }
+        campoSeleccionados.deleteCharAt(campoSeleccionados.length()-1);
+    }
+
+    public List<Object> listarRegistros(List<Parametro> parametros) throws BadDefinitionException{
+        List<Field> campos = new ArrayList<>();
+        StringBuilder campoSeleccionados =  new StringBuilder();
+        this.construirSelect(campos,campoSeleccionados);
+
+        String sql = String.format("SELECT %s FROM %s %s",
+                campoSeleccionados.toString(),
+                this.nombreTabla.nombre(),
+                this.clausulaWhere(parametros));
+
+        List<Object> beans = new ArrayList<>();
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            int i = 0;
+
+            for(Parametro parametro:  parametros){
+                if(parametro.getValorUnico() != null)
+                    pst.setObject(++i,parametro.getValorUnico(),parametro.getCampoTabla().tipoDato());
+                else
+                    for(Object valorIn : parametro.getValorCompuesto() )
+                        pst.setObject(++i,valorIn,parametro.getCampoTabla().tipoDato());
+            }
+
+            try(ResultSet rs = pst.executeQuery()){
+                while(rs.next()){
+                    beans.add(this.resultSetAObjeto(this.obtenerNuevaInstancia(),rs,campos));
+                }
+            }
+        }
+        catch (SQLException e){
+            e.printStackTrace(System.err);
+        }
+        return beans;
+    }
+
+    private void construirSelect(List<Field> campos,StringBuilder campoSeleccionados){
+
+        for(Field campo : claseBean.getDeclaredFields()){
             CampoTabla campoTabla = campo.getAnnotation(CampoTabla.class);
             if(campo.getAnnotation(CampoTabla.class) != null){
                 campoSeleccionados.append(campoTabla.campo());
@@ -115,7 +169,7 @@ public class Dao {
         if(parametros.size() == 0)
             retorno =  "";
         else{
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new StringBuilder(" WHERE ");
 
             Parametro parametro = parametros.get(0);
             builder.append(parametro .getCampoTabla().campo());
@@ -129,10 +183,9 @@ public class Dao {
                 builder.append(")");
             }
 
-            parametros.remove(0);
-            parametros.forEach(p -> {
+            for(int i = 1 ; i < parametros.size() ; i++){
+                Parametro p = parametros.get(i);
                 builder.append(p.getCondicional().getId());
-                builder.append(" ");
                 builder.append(p.getCampoTabla().campo());
                 builder.append(p.getOperacion().getSimbolo());
                 if(p.getValorUnico() != null)
@@ -144,7 +197,8 @@ public class Dao {
                     builder.append(")");
                 }
                 builder.append(" ");
-            });
+            }
+
             retorno = builder.toString();
         }
         return retorno;
@@ -176,6 +230,7 @@ public class Dao {
                 String nombre = campo.getName();
                 nombre = nombre.substring(0,1).toUpperCase() + nombre.substring(1);
                 Method setter =  claseBean.getDeclaredMethod("set"+nombre,campo.getType());
+
                 setter.invoke(bean,resultSet.getObject(i++));
 
             }

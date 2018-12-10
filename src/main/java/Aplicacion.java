@@ -1,19 +1,19 @@
 import beans.Eps;
-import dao.Dao;
-import dao.anotaciones.CampoTabla;
-import dao.anotaciones.LlavePrimaria;
-import dao.anotaciones.LlavePrimariaCompuesta;
-import dao.anotaciones.NombreTabla;
-import dao.conexion.GeneradorConexiones;
+import beans.Localidad;
+import com.azoth.eve.Dao;
+import com.azoth.eve.Parametro;
+import com.azoth.eve.anotaciones.CampoTabla;
+import com.azoth.eve.anotaciones.LlavePrimariaCompuesta;
+import com.azoth.eve.condicionales.Condicional;
+import com.azoth.eve.condicionales.Operacion;
+import com.azoth.eve.conexion.GeneradorConexiones;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.List;
 
 /*
 import java.io.IOException;
@@ -37,11 +37,32 @@ public abstract class Aplicacion {
             generadorConexiones.cargarParametros(in);
             try(Connection connection = generadorConexiones.obtenerConexion()){
                 Dao dao = new Dao(connection,Eps.class);
+                Dao dao2 = new Dao(connection,Localidad.class);
 
                 Eps registro = (Eps)dao.obtenerRegistro(Arrays.asList(1));
+                Localidad localidad = (Localidad) dao2.obtenerRegistro(Arrays.asList(1,1));
 
+
+
+                CampoTabla campoTabla = clasex.getDeclaredField("codigo").getAnnotation(CampoTabla.class);
+                Parametro parametro = new Parametro(
+                    campoTabla,
+                    Condicional.AND,
+                    Operacion.MAYOR_IGUAL,
+                    30
+                );
+
+                List<Object> registros = dao.listarRegistros(Arrays.asList(parametro));
                 System.out.println();
                 System.out.println(registro.toString());
+                System.out.println();
+                System.out.println(localidad.toString());
+
+                for(Object eps : registros){
+                    System.out.println();
+                    System.out.println(((Eps)eps).toString());
+
+                }
             }
 
             generadorConexiones.cerrarPoolDeConexiones();

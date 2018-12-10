@@ -1,4 +1,4 @@
-package dao.anotaciones;
+package com.azoth.eve.anotaciones;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

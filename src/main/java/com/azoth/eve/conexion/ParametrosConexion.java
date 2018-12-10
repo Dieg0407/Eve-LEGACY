@@ -1,4 +1,4 @@
-package dao.conexion;
+package com.azoth.eve.conexion;
 
 /***
  * Clase que contiene los parametros necesarios
