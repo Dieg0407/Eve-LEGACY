@@ -13,7 +13,9 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.lang.reflect.Field;
 
 /*
 import java.io.IOException;
@@ -63,6 +65,48 @@ public abstract class Aplicacion {
                     System.out.println(((Eps)eps).toString());
 
                 }
+
+                Eps epsTest = new Eps();
+                epsTest.setCodigo(0);
+                epsTest.setCodigoGrupo(1);
+                Eps epsTest2 = new Eps();
+                epsTest.setCodigo(-1);
+                epsTest.setCodigoGrupo(1);
+
+                System.out.println(dao.insertarRegistro(epsTest));
+                System.out.println(dao.insertarRegistro(epsTest2));
+
+                CampoTabla campoTabla2 = clasex.getDeclaredField("codigo").getAnnotation(CampoTabla.class);
+                Parametro parametro1 = new Parametro(
+                        campoTabla,
+                        Condicional.AND,
+                        Operacion.IGUAL,
+                        0
+                );
+                Parametro parametro2 = new Parametro(
+                        campoTabla,
+                        Condicional.OR,
+                        Operacion.IGUAL,
+                        -1
+                );
+
+                System.out.println(dao.borrarRegistros(Arrays.asList(parametro1,parametro2)));
+
+                System.out.println(dao.insertarRegistro(epsTest));
+                epsTest.setDenominacion("Esto es una prueba");
+                System.out.println(dao.actualizarRegistro(epsTest));
+
+                HashMap<Field,Object> prueba = new HashMap<>();
+                prueba.put(clasex.getDeclaredField("usuarioActualizador"),"DIEGO");
+
+                Parametro p1 = new Parametro(
+                        clasex.getDeclaredField("codigo"),
+                        Condicional.AND,
+                        Operacion.IN,
+                        Arrays.asList(20,15,10)
+                );
+
+                System.out.println(dao.actualizarRegistro(prueba,Arrays.asList(p1)));
             }
 
             generadorConexiones.cerrarPoolDeConexiones();

@@ -15,7 +15,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+
 
 public class Dao {
     private Connection conexion;
@@ -162,10 +165,198 @@ public class Dao {
         campoSeleccionados.deleteCharAt(campoSeleccionados.length()-1);
     }
 
-    //METODOS PRIVADOS DE CORTE GENERAL
+    public boolean insertarRegistro(Object registro) throws IllegalArgumentException, BadDefinitionException{
+        if(!this.claseBean.isInstance(registro))
+            throw new IllegalArgumentException("El objeto no es de la clase mapeada en el DAO");
 
+        boolean exito;
+
+        List<Field> campos = new ArrayList<>();
+        StringBuilder sentencia =  new StringBuilder();
+
+        this.construirInsert(campos,sentencia);
+
+        String sql = String.format("INSERT INTO %s %s ",
+                this.nombreTabla.nombre(),
+                sentencia.toString());
+
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            int i = 1;
+
+            for(Field f : campos){
+                CampoTabla campoTabla = f.getAnnotation(CampoTabla.class);
+                pst.setObject(i++,this.obtenerDato(registro,f),campoTabla.tipoDato());
+            }
+
+            pst.executeUpdate();
+            exito = true;
+        }
+        catch (SQLException e){
+            e.printStackTrace(System.err);
+            exito = false;
+        }
+        return exito;
+    }
+
+    private void construirInsert(List<Field> campos,StringBuilder sentencia){
+        StringBuilder parte1 = new StringBuilder();
+        StringBuilder parte2 = new StringBuilder();
+
+        for(Field campo : claseBean.getDeclaredFields()){
+            CampoTabla campoTabla = campo.getAnnotation(CampoTabla.class);
+            if(campo.getAnnotation(CampoTabla.class) != null){
+                parte1.append(campoTabla.campo());
+                parte1.append(",");
+
+                parte2.append("?");
+                parte2.append(",");
+
+                campos.add(campo);
+            }
+        }
+        parte1.deleteCharAt(parte1.length()-1);
+        parte2.deleteCharAt(parte2.length()-1);
+
+        sentencia.append("(");
+        sentencia.append(parte1.toString());
+        sentencia.append(")");
+        sentencia.append(" VALUES (");
+        sentencia.append(parte2.toString());
+        sentencia.append(");");
+    }
+
+    public int borrarRegistros(List<Parametro> parametros) {
+        int afectados;
+
+        String sql = String.format("DELETE FROM %s %s",
+                this.nombreTabla.nombre(),
+                this.clausulaWhere(parametros));
+
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            int i = 0;
+
+            for(Parametro parametro:  parametros){
+                if(parametro.getValorUnico() != null)
+                    pst.setObject(++i,parametro.getValorUnico(),parametro.getCampoTabla().tipoDato());
+                else
+                    for(Object valorIn : parametro.getValorCompuesto() )
+                        pst.setObject(++i,valorIn,parametro.getCampoTabla().tipoDato());
+            }
+
+            afectados = pst.executeUpdate();
+        }
+        catch (SQLException e){
+            e.printStackTrace(System.err);
+            afectados = -1;
+        }
+        return afectados;
+    }
+
+    public int actualizarRegistro(Object registro) throws IllegalArgumentException,BadDefinitionException{
+        if(!this.claseBean.isInstance(registro))
+            throw new IllegalArgumentException("El objeto no es de la clase mapeada en el DAO");
+
+        int registros;
+
+        List<Field> campos = new ArrayList<>();
+        List<Field> llavesPrimarias = new ArrayList<>();
+        StringBuilder sentencia = new StringBuilder();
+
+        this.construirUpdate(campos,llavesPrimarias,sentencia);
+
+        List<Parametro> parametros = new ArrayList<>();
+        for(Field llave : llavesPrimarias){
+            parametros.add(new Parametro(llave.getAnnotation(CampoTabla.class), Condicional.AND, Operacion.IGUAL,new Object()));
+        }
+
+        String sql = String.format("UPDATE %s SET %s %s",
+                this.nombreTabla.nombre(),
+                sentencia.toString(),
+                this.clausulaWhere(parametros));
+
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            int i = 1;
+            for(Field f : campos)
+                pst.setObject(i++,this.obtenerDato(registro,f),f.getAnnotation(CampoTabla.class).tipoDato());
+            for(Field f : llavesPrimarias)
+                pst.setObject(i++,this.obtenerDato(registro,f),f.getAnnotation(CampoTabla.class).tipoDato());
+
+            registros = pst.executeUpdate();
+        }
+        catch (SQLException e){
+            e.printStackTrace(System.err);
+            registros = -1;
+        }
+        return registros;
+    }
+
+    private void construirUpdate(List<Field> campos,List<Field> llavePrimaria,StringBuilder sentencia)  {
+        for(Field campo : this.claseBean.getDeclaredFields()){
+            if(campo.getAnnotation(LlavePrimaria.class) != null)
+                llavePrimaria.add(campo);
+
+            CampoTabla campoTabla = campo.getAnnotation(CampoTabla.class);
+            sentencia.append(campoTabla.campo());
+            sentencia.append(" = ? ,");
+
+            campos.add(campo);
+        }
+        sentencia.deleteCharAt(sentencia.length()-1);
+    }
+
+    public int actualizarRegistro(HashMap<Field, Object> campos, List<Parametro> condiciones){
+        int registros;
+
+        String sql = String.format("UPDATE %s SET %s %s",
+                this.nombreTabla.nombre(),
+                this.contruirUpdate(campos.keySet()),
+                this.clausulaWhere(condiciones));
+
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            int i = 1;
+            for(Field f : campos.keySet())
+                pst.setObject(i++,campos.get(f),f.getAnnotation(CampoTabla.class).tipoDato());
+
+            for(Parametro parametro : condiciones)
+                if(parametro.getValorUnico() != null)
+                    pst.setObject(i++,parametro.getValorUnico(),parametro.getCampoTabla().tipoDato());
+                else
+                    for(Object valorIn : parametro.getValorCompuesto() )
+                        pst.setObject(i++,valorIn,parametro.getCampoTabla().tipoDato());
+
+
+            registros = pst.executeUpdate();
+        }
+        catch (SQLException e){
+            e.printStackTrace(System.err);
+            registros = -1;
+        }
+        return registros;
+
+    }
+
+    private String contruirUpdate(Set<Field> fieldSet) throws IllegalArgumentException{
+        StringBuilder retorno = new StringBuilder();
+        try {
+            for(Field f : fieldSet){
+                this.claseBean.getDeclaredField(f.getName());
+                CampoTabla campoTabla = f.getAnnotation(CampoTabla.class);
+                retorno.append(campoTabla.campo());
+                retorno.append(" = ? ,");
+            }
+        }
+        catch (NoSuchFieldException e){
+            e.printStackTrace(System.err);
+            throw new IllegalArgumentException("Uno de los campos no pertenece a la Clase");
+        }
+        retorno.deleteCharAt(retorno.length()-1);
+
+        return retorno.toString();
+    }
+
+    //METODOS PRIVADOS DE CORTE GENERAL
     private String clausulaWhere(List<Parametro> parametros){
-        String retorno = null;
+        String retorno;
         if(parametros.size() == 0)
             retorno =  "";
         else{
@@ -250,6 +441,25 @@ public class Dao {
         return bean;
     }
 
+    private Object obtenerDato(Object bean, Field campo) throws BadDefinitionException{
+        try{
+            String nombre = campo.getName();
+            nombre = nombre.substring(0,1).toUpperCase() + nombre.substring(1);
+            Method getter =  claseBean.getDeclaredMethod("get"+nombre);
+            return getter.invoke(bean);
+        }
+        catch (NoSuchMethodException e){
+            throw new BadDefinitionException("Falta un Getter para el Bean");
+        }
+        catch (InvocationTargetException e){
+            throw new BadDefinitionException("No se pudo llamar al getter del Bean");
+        }
+        catch (IllegalAccessException e){
+            throw new BadDefinitionException("No se tiene acceso al getter del Bean, debe de estar en público");
+        }
+
+    }
+
     private void verificarEstructura()  throws BadDefinitionException{
         if(claseBean.getAnnotation(NombreTabla.class) == null ||
                 ( claseBean.getAnnotation(LlavePrimariaSimple.class) == null &&
@@ -280,4 +490,6 @@ public class Dao {
         }
 
     }
+
+
 }

@@ -4,6 +4,7 @@ import com.azoth.eve.anotaciones.CampoTabla;
 import com.azoth.eve.condicionales.Condicional;
 import com.azoth.eve.condicionales.Operacion;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 public class Parametro {
@@ -24,6 +25,20 @@ public class Parametro {
 
     public Parametro(CampoTabla campo, Condicional condicional, Operacion operacion, List<Object> valorCompuesto){
         this.campoTabla = campo;
+        this.condicional = condicional;
+        this.operacion = operacion;
+        this.valorCompuesto = valorCompuesto;
+    }
+
+    public Parametro(Field campo, Condicional condicional, Operacion operacion, Object valorUnico){
+        this.campoTabla = campo.getAnnotation(CampoTabla.class);
+        this.condicional = condicional;
+        this.operacion = operacion;
+        this.valorUnico = valorUnico;
+    }
+
+    public Parametro(Field campo, Condicional condicional, Operacion operacion, List<Object> valorCompuesto){
+        this.campoTabla = campo.getAnnotation(CampoTabla.class);
         this.condicional = condicional;
         this.operacion = operacion;
         this.valorCompuesto = valorCompuesto;
