@@ -16,13 +16,14 @@ public class Parametro {
     private Object valorUnico;
     private List<Object> valorCompuesto;
 
+    private boolean trim = false;
+
     public Parametro(CampoTabla campo, Condicional condicional, Operacion operacion, Object valorUnico){
         this.campoTabla = campo;
         this.condicional = condicional;
         this.operacion = operacion;
         this.valorUnico = valorUnico;
     }
-
     public Parametro(CampoTabla campo, Condicional condicional, Operacion operacion, List<Object> valorCompuesto){
         this.campoTabla = campo;
         this.condicional = condicional;
@@ -31,17 +32,26 @@ public class Parametro {
     }
 
     public Parametro(Field campo, Condicional condicional, Operacion operacion, Object valorUnico){
-        this.campoTabla = campo.getAnnotation(CampoTabla.class);
-        this.condicional = condicional;
-        this.operacion = operacion;
-        this.valorUnico = valorUnico;
+        this(campo.getAnnotation(CampoTabla.class),condicional,operacion,valorUnico);
     }
 
     public Parametro(Field campo, Condicional condicional, Operacion operacion, List<Object> valorCompuesto){
-        this.campoTabla = campo.getAnnotation(CampoTabla.class);
-        this.condicional = condicional;
-        this.operacion = operacion;
-        this.valorCompuesto = valorCompuesto;
+        this(campo.getAnnotation(CampoTabla.class),condicional,operacion,valorCompuesto);
+    }
+
+    public Parametro(CampoTabla campo, Condicional condicional, Operacion operacion, Object valorUnico, boolean trim){
+        this(campo,condicional,operacion,valorUnico);
+        this.trim = trim;
+    }
+    public Parametro(CampoTabla campo, Condicional condicional, Operacion operacion, List<Object> valorCompuesto, boolean trim){
+        this(campo,condicional,operacion,valorCompuesto);
+        this.trim = trim;
+    }
+    public Parametro(Field campo, Condicional condicional, Operacion operacion, Object valorUnico, boolean trim){
+        this(campo.getAnnotation(CampoTabla.class),condicional,operacion,valorUnico,trim);
+    }
+    public Parametro(Field campo, Condicional condicional, Operacion operacion, List<Object> valorCompuesto, boolean trim){
+        this(campo.getAnnotation(CampoTabla.class),condicional,operacion,valorCompuesto,trim);
     }
 
     public CampoTabla getCampoTabla() {
@@ -62,5 +72,9 @@ public class Parametro {
 
     public List<Object> getValorCompuesto() {
         return valorCompuesto;
+    }
+
+    public boolean isTrim() {
+        return trim;
     }
 }

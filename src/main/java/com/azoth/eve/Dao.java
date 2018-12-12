@@ -10,10 +10,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -363,7 +360,14 @@ public class Dao {
             StringBuilder builder = new StringBuilder(" WHERE ");
 
             Parametro parametro = parametros.get(0);
-            builder.append(parametro .getCampoTabla().campo());
+            if(parametro.isTrim() && parametro.getCampoTabla().tipoDato() == Types.VARCHAR){
+                builder.append("TRIM(");
+                builder.append(parametro .getCampoTabla().campo());
+                builder.append(")");
+            }
+            else
+                builder.append(parametro .getCampoTabla().campo());
+
             builder.append(parametro .getOperacion().getSimbolo());
             if(parametro .getValorUnico() != null)
                 builder.append("?");
@@ -377,7 +381,15 @@ public class Dao {
             for(int i = 1 ; i < parametros.size() ; i++){
                 Parametro p = parametros.get(i);
                 builder.append(p.getCondicional().getId());
-                builder.append(p.getCampoTabla().campo());
+
+                if(p.isTrim() && p.getCampoTabla().tipoDato() == Types.VARCHAR){
+                    builder.append("TRIM(");
+                    builder.append(p .getCampoTabla().campo());
+                    builder.append(")");
+                }
+                else
+                    builder.append(p .getCampoTabla().campo());
+
                 builder.append(p.getOperacion().getSimbolo());
                 if(p.getValorUnico() != null)
                     builder.append("?");

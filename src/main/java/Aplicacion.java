@@ -39,6 +39,7 @@ public abstract class Aplicacion {
             generadorConexiones.cargarParametros(in);
             try(Connection connection = generadorConexiones.obtenerConexion()){
                 Dao dao = new Dao(connection,Eps.class);
+                /*
                 Dao dao2 = new Dao(connection,Localidad.class);
 
                 Eps registro = (Eps)dao.obtenerRegistro(Arrays.asList(1));
@@ -107,6 +108,37 @@ public abstract class Aplicacion {
                 );
 
                 System.out.println(dao.actualizarRegistro(prueba,Arrays.asList(p1)));
+                */
+                Parametro p1 = new Parametro(
+                        clasex.getDeclaredField("usuarioActualizador"),
+                        Condicional.AND,
+                        Operacion.IGUAL,
+                        "DIEGO"
+                );
+                Parametro p2 = new Parametro(
+                        clasex.getDeclaredField("usuarioActualizador"),
+                        Condicional.AND,
+                        Operacion.IGUAL,
+                        "DIEGO",
+                        true
+                );
+
+                List<Object> res1 = dao.listarRegistros(Arrays.asList(p1));
+                List<Object> res2 = dao.listarRegistros(Arrays.asList(p2));
+
+                System.out.println("RES 1");
+                for(Object eps : res1){
+                    System.out.println();
+                    System.out.println(((Eps)eps).toString());
+
+                }
+
+                System.out.println("RES 2");
+                for(Object eps : res2){
+                    System.out.println();
+                    System.out.println(((Eps)eps).toString());
+
+                }
             }
 
             generadorConexiones.cerrarPoolDeConexiones();
