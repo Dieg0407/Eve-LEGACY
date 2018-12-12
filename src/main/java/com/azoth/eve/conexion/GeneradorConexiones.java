@@ -25,16 +25,9 @@ public class GeneradorConexiones {
     private ConnectionFactory connectionFactory = null;
     private PoolableConnectionFactory poolableConnectionFactory = null;
 
-    private static GeneradorConexiones instancia;
 
-    private GeneradorConexiones(){}
+    public GeneradorConexiones(){}
 
-    public static GeneradorConexiones getInstance(){
-        if(instancia == null)
-            instancia = new GeneradorConexiones();
-
-        return instancia;
-    }
 
     public void cargarParametros(InputStream archivo){
         ObjectMapper mapper = new ObjectMapper();

@@ -35,7 +35,7 @@ public abstract class Aplicacion {
 
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try(InputStream in = (classLoader.getResourceAsStream("conexion-bd.json"))){
-            GeneradorConexiones generadorConexiones = GeneradorConexiones.getInstance();
+            GeneradorConexiones generadorConexiones = new GeneradorConexiones();
             generadorConexiones.cargarParametros(in);
             try(Connection connection = generadorConexiones.obtenerConexion()){
                 Dao dao = new Dao(connection,Eps.class);
