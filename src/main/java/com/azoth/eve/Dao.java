@@ -434,7 +434,13 @@ public class Dao {
                 nombre = nombre.substring(0,1).toUpperCase() + nombre.substring(1);
                 Method setter =  claseBean.getDeclaredMethod("set"+nombre,campo.getType());
 
-                setter.invoke(bean,resultSet.getObject(i++));
+                Object object = resultSet.getObject(i++);
+                if(!object.getClass().equals(campo.getType()))
+                    throw new BadDefinitionException(String.format(
+                            "El campo %s del Bean no es compatible con la BD, BD : %s - Bean : %s",
+                            nombre,object.getClass(),campo.getType()));
+
+                setter.invoke(bean,object);
 
             }
         }
