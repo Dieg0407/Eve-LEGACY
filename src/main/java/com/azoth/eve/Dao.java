@@ -40,6 +40,7 @@ public class Dao {
 
         this.construirSelectPrimario(campos,llavesPrimarias,campoSeleccionados);
 
+
         String sql = String.format("SELECT %s FROM %s WHERE %s = ? ",
                 campoSeleccionados.toString(),
                 this.nombreTabla.nombre(),
@@ -70,13 +71,14 @@ public class Dao {
 
         this.construirSelectPrimario(campos,llavesPrimarias,campoSeleccionados);
 
+
         List<Parametro> parametros = new ArrayList<>();
         int c = 0;
         for(CampoTabla llave : llavesPrimarias){
             parametros.add(new Parametro(llave, Condicional.AND, Operacion.IGUAL,datos.get(c++)));
         }
 
-        String sql = String.format("SELECT %s FROM %s %s",
+        String sql = String.format("SELECT %s FROM %s %s ",
                 campoSeleccionados.toString(),
                 this.nombreTabla.nombre(),
                 this.clausulaWhere(parametros));
@@ -124,6 +126,50 @@ public class Dao {
                 campoSeleccionados.toString(),
                 this.nombreTabla.nombre(),
                 this.clausulaWhere(parametros));
+
+        List<Object> beans = new ArrayList<>();
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            int i = 0;
+
+            for(Parametro parametro:  parametros){
+                if(parametro.getValorUnico() != null)
+                    pst.setObject(++i,parametro.getValorUnico(),parametro.getCampoTabla().tipoDato());
+                else
+                    for(Object valorIn : parametro.getValorCompuesto() )
+                        pst.setObject(++i,valorIn,parametro.getCampoTabla().tipoDato());
+            }
+
+            try(ResultSet rs = pst.executeQuery()){
+                while(rs.next()){
+                    beans.add(this.resultSetAObjeto(this.obtenerNuevaInstancia(),rs,campos));
+                }
+            }
+        }
+        catch (SQLException e){
+            e.printStackTrace(System.err);
+        }
+        return beans;
+    }
+
+    public List<Object> listarRegistros(List<Parametro> parametros,HashMap<Field,Boolean> orderBy) throws BadDefinitionException{
+        List<Field> campos = new ArrayList<>();
+        StringBuilder campoSeleccionados =  new StringBuilder();
+        this.construirSelect(campos,campoSeleccionados);
+
+        HashMap<CampoTabla,Boolean> clausulaOrderBy = new HashMap<>();
+        if(orderBy != null)
+            for(Field f : orderBy.keySet())
+                if(f.getAnnotation(CampoTabla.class) != null)
+                    clausulaOrderBy.put(f.getAnnotation(CampoTabla.class),orderBy.get(f));
+                else
+                    throw new BadDefinitionException(String.format("El campo %s no posee la anotación CampoTabla",f.getName()));
+
+
+        String sql = String.format("SELECT %s FROM %s %s %s",
+                campoSeleccionados.toString(),
+                this.nombreTabla.nombre(),
+                this.clausulaWhere(parametros),
+                this.clausulaOrderBy(clausulaOrderBy));
 
         List<Object> beans = new ArrayList<>();
         try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
@@ -406,6 +452,25 @@ public class Dao {
         }
         return retorno;
     }
+    //Retorna un String con la clausula Order By, si el valor es false entonces es desc
+    private String clausulaOrderBy(HashMap<CampoTabla,Boolean> campoTablaHashMap){
+        String retorno;
+        if(campoTablaHashMap.keySet().size() == 0)
+            retorno =  "";
+        else {
+            StringBuilder builder = new StringBuilder(" ORDER BY ");
+            for(CampoTabla campoTabla : campoTablaHashMap.keySet()){
+                builder.append(campoTabla.campo());
+                if(!campoTablaHashMap.get(campoTabla))//Si es falso, entonces es desc
+                    builder.append(" desc");
+                builder.append(",");
+            }
+            builder.deleteCharAt(builder.length()-1);
+            retorno = builder.toString();
+        }
+        return retorno;
+    }
+
 
     private Object obtenerNuevaInstancia() throws BadDefinitionException{
         Object bean;
@@ -435,10 +500,12 @@ public class Dao {
                 Method setter =  claseBean.getDeclaredMethod("set"+nombre,campo.getType());
 
                 Object object = resultSet.getObject(i++);
-                if(!object.getClass().equals(campo.getType()))
-                    throw new BadDefinitionException(String.format(
-                            "El campo %s del Bean no es compatible con la BD, BD : %s - Bean : %s",
-                            nombre,object.getClass(),campo.getType()));
+                if(object != null)
+                    if(!object.getClass().equals(campo.getType())) {
+                        throw new BadDefinitionException(String.format(
+                                "El campo %s del Bean no es compatible con la BD, BD : %s - Bean : %s",
+                                nombre, object.getClass(), campo.getType()));
+                    }
 
                 setter.invoke(bean,object);
 
