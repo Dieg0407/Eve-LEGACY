@@ -11,10 +11,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 
 public class Dao {
@@ -156,7 +153,7 @@ public class Dao {
         StringBuilder campoSeleccionados =  new StringBuilder();
         this.construirSelect(campos,campoSeleccionados);
 
-        HashMap<CampoTabla,Boolean> clausulaOrderBy = new HashMap<>();
+        HashMap<CampoTabla,Boolean> clausulaOrderBy = new LinkedHashMap<>();
         if(orderBy != null)
             for(Field f : orderBy.keySet())
                 if(f.getAnnotation(CampoTabla.class) != null)
