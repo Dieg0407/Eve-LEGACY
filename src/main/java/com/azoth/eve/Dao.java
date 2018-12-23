@@ -44,18 +44,21 @@ public class Dao {
                 llavesPrimarias.get(0).campo());
 
         Object bean = this.obtenerNuevaInstancia();
-
+        boolean existeRegistro = false;
         try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
             pst.setObject(1,dato,llavesPrimarias.get(0).tipoDato());
             try(ResultSet rs = pst.executeQuery()){
-                while(rs.next())
-                    this.resultSetAObjeto(bean,rs,campos);
-
+                while(rs.next()) {
+                    this.resultSetAObjeto(bean, rs, campos);
+                    existeRegistro = true;
+                }
             }
         }
         catch (SQLException e){
             e.printStackTrace(System.err);
         }
+        if(!existeRegistro)
+            bean = null;
         return bean;
     }
     public Object obtenerRegistro(List<Object> datos)throws WrongOperationException,BadDefinitionException{
@@ -81,21 +84,24 @@ public class Dao {
                 this.clausulaWhere(parametros));
 
         Object bean = this.obtenerNuevaInstancia();
-
+        boolean existeRegistro = false;
         try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
             int i = 0;
             for(Object dato : datos)
                 pst.setObject(i+1,dato,llavesPrimarias.get(i++).tipoDato());
 
             try(ResultSet rs = pst.executeQuery()){
-                while(rs.next())
-                    this.resultSetAObjeto(bean,rs,campos);
-
+                while(rs.next()) {
+                    this.resultSetAObjeto(bean, rs, campos);
+                    existeRegistro = true;
+                }
             }
         }
         catch (SQLException e){
             e.printStackTrace(System.err);
         }
+        if(!existeRegistro)
+            bean = null;
         return bean;
     }
     private void construirSelectPrimario(List<Field> campos,List<CampoTabla> llavePrimaria,StringBuilder campoSeleccionados){
