@@ -120,6 +120,30 @@ public class Dao {
         campoSeleccionados.deleteCharAt(campoSeleccionados.length()-1);
     }
 
+    public List<Object> listarTodos() throws BadDefinitionException{
+        List<Field> campos = new ArrayList<>();
+        StringBuilder campoSeleccionados =  new StringBuilder();
+        this.construirSelect(campos,campoSeleccionados);
+
+        String sql = String.format("SELECT %s FROM %s ",
+                campoSeleccionados.toString(),
+                this.nombreTabla.nombre());
+
+        List<Object> beans = new ArrayList<>();
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            int i = 0;
+            try(ResultSet rs = pst.executeQuery()){
+                while(rs.next()){
+                    beans.add(this.resultSetAObjeto(this.obtenerNuevaInstancia(),rs,campos));
+                }
+            }
+        }
+        catch (SQLException e){
+            e.printStackTrace(System.err);
+        }
+        return beans;
+    }
+
     public List<Object> listarRegistros(List<Parametro> parametros) throws BadDefinitionException{
         List<Field> campos = new ArrayList<>();
         StringBuilder campoSeleccionados =  new StringBuilder();
