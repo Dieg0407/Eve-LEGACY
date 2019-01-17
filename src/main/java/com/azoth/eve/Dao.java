@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class Dao {
@@ -366,10 +367,12 @@ public class Dao {
                 llavePrimaria.add(campo);
 
             CampoTabla campoTabla = campo.getAnnotation(CampoTabla.class);
-            sentencia.append(campoTabla.campo());
-            sentencia.append(" = ? ,");
+            if(campoTabla != null){
+                sentencia.append(campoTabla.campo());
+                sentencia.append(" = ? ,");
 
-            campos.add(campo);
+                campos.add(campo);
+            }
         }
         sentencia.deleteCharAt(sentencia.length()-1);
     }
@@ -382,10 +385,16 @@ public class Dao {
                 this.contruirUpdate(campos.keySet()),
                 this.clausulaWhere(condiciones));
 
+        HashMap<CampoTabla,Object> campos2 = new LinkedHashMap<>();
+        if(campos != null)
+            for(Field f : campos.keySet())
+                if(f.getAnnotation(CampoTabla.class) != null)
+                    campos2.put(f.getAnnotation(CampoTabla.class),campos.get(f));
+
         try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
             int i = 1;
-            for(Field f : campos.keySet())
-                pst.setObject(i++,campos.get(f),f.getAnnotation(CampoTabla.class).tipoDato());
+            for(CampoTabla f : campos2.keySet())
+                pst.setObject(i++,campos2.get(f),f.tipoDato());
 
             for(Parametro parametro : condiciones)
                 if(parametro.getValorUnico() != null)
@@ -578,6 +587,15 @@ public class Dao {
                         claseBean.getAnnotation(LlavePrimariaCompuesta.class) == null ))
             throw new BadDefinitionException("Error en la definición del Bean");
 
+        if(Arrays.asList(claseBean.getDeclaredFields())
+                .stream()
+                .filter(d -> d.getAnnotation(CampoTabla.class) != null)
+                .collect(Collectors.toList())
+            .size() == 0)
+            throw new BadDefinitionException("El bean debe de tener por lo menos un campo " +
+                    "con la anotación 'CampoTabla'");
+
+
         if(claseBean.getAnnotation(LlavePrimariaSimple.class) != null){
             Field primaria = null;
             for(Field campo : this.claseBean.getDeclaredFields()){
@@ -602,6 +620,4 @@ public class Dao {
         }
 
     }
-
-
 }
