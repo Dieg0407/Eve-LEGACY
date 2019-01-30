@@ -90,6 +90,13 @@ public class GeneradorConexiones {
                             this.parametrosConexion.getPuerto(),
                             this.parametrosConexion.getBaseDeDatos());
                     break;
+                case "sybase":
+                    DriverManager.registerDriver(new net.sourceforge.jtds.jdbc.Driver());
+                    jdbcUrl = String.format("jdbc:jtds:sybase://%s:%s/%s",
+                            this.parametrosConexion.getUrl(),
+                            this.parametrosConexion.getPuerto(),
+                            this.parametrosConexion.getBaseDeDatos());
+                    break;
             }
 
             this.poolDeConexiones = new GenericObjectPool();
