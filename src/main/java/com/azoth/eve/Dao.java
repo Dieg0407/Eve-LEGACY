@@ -179,12 +179,12 @@ public class Dao {
         return beans;
     }
 
-    public List<Object> listarRegistros(List<Parametro> parametros,HashMap<Field,Boolean> orderBy) throws BadDefinitionException{
+    public List<Object> listarRegistros(List<Parametro> parametros,Map<Field,Boolean> orderBy) throws BadDefinitionException{
         List<Field> campos = new ArrayList<>();
         StringBuilder campoSeleccionados =  new StringBuilder();
         this.construirSelect(campos,campoSeleccionados);
 
-        HashMap<CampoTabla,Boolean> clausulaOrderBy = new LinkedHashMap<>();
+        Map<CampoTabla,Boolean> clausulaOrderBy = new LinkedHashMap<>();
         if(orderBy != null)
             for(Field f : orderBy.keySet())
                 if(f.getAnnotation(CampoTabla.class) != null)
@@ -377,7 +377,7 @@ public class Dao {
         sentencia.deleteCharAt(sentencia.length()-1);
     }
 
-    public int actualizarRegistro(HashMap<Field, Object> campos, List<Parametro> condiciones){
+    public int actualizarRegistro(Map<Field, Object> campos, List<Parametro> condiciones){
         int registros;
 
         String sql = String.format("UPDATE %s SET %s %s",
@@ -385,7 +385,7 @@ public class Dao {
                 this.contruirUpdate(campos.keySet()),
                 this.clausulaWhere(condiciones));
 
-        HashMap<CampoTabla,Object> campos2 = new LinkedHashMap<>();
+        Map<CampoTabla,Object> campos2 = new LinkedHashMap<>();
         if(campos != null)
             for(Field f : campos.keySet())
                 if(f.getAnnotation(CampoTabla.class) != null)
@@ -489,7 +489,7 @@ public class Dao {
         return retorno;
     }
     //Retorna un String con la clausula Order By, si el valor es false entonces es desc
-    private String clausulaOrderBy(HashMap<CampoTabla,Boolean> campoTablaHashMap){
+    private String clausulaOrderBy(Map<CampoTabla,Boolean> campoTablaHashMap){
         String retorno;
         if(campoTablaHashMap.keySet().size() == 0)
             retorno =  "";
