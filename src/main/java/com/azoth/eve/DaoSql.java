@@ -316,6 +316,21 @@ public class DaoSql {
         return afectados;
     }
 
+    public int borrarTodos() throws SQLException{
+        int afectados;
+
+        String sql = String.format("DELETE FROM %s ",
+                this.nombreTabla.nombre());
+
+        try(PreparedStatement pst = this.conexion.prepareStatement(sql)){
+            afectados = pst.executeUpdate();
+        }
+        catch (SQLException e){
+            throw e;
+        }
+        return afectados;
+    }
+
     public int actualizarRegistro(Object registro) throws IllegalArgumentException,BadDefinitionException,SQLException{
         if(!this.claseBean.isInstance(registro))
             throw new IllegalArgumentException("El objeto no es de la clase mapeada en el DAO");
