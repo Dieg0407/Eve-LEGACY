@@ -77,7 +77,7 @@ public class GeneradorConexiones {
             String jdbcUrl = "";
             switch (this.parametrosConexion.getProveedor()){
                 case "mysql":
-                    DriverManager.registerDriver(new com.mysql.cj.jdbc.Driver());
+                    DriverManager.registerDriver(new com.mysql.jdbc.Driver());
                     jdbcUrl = String.format("jdbc:mysql://%s:%s/%s",
                             this.parametrosConexion.getUrl(),
                             this.parametrosConexion.getPuerto(),
